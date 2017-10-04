@@ -1,11 +1,12 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 namespace QuanMinKGe
-{ 
+{
     public static class SongInformation
     {
         public static Work information;
@@ -22,88 +23,109 @@ namespace QuanMinKGe
             sb.Append(string.Format("Json lib name:{0},version:{1}.", "Newtonsoft.Json", ass2.GetName().Version.ToString()));
             Console.WriteLine(sb.ToString());
         }
-        public static  void Main(string[] args)
+        public static void Main(string[] args)
         {
             DisplayCopyRight();
+
             string result = null;
-            string url="", filename="";
-            if (args.Length==2)
+            string url = "", filename = "";
+            if (args.Length == 2)
             {
                 url = args[0];
                 filename = args[1];
             }
-            else if(args.Length==1)
+            else if (args.Length == 1)
             {
                 url = args[0];
             }
-            //else
-            //{
-            //    Console.WriteLine("参数为地址和保存位置");
-            //}
-            if (filename!="")
+            else
             {
-              if (filename==Path.GetFileName(filename))
-              {
-                filename = Environment.CurrentDirectory + filename;
-              }
+                Console.WriteLine("参数为地址和保存位置");
             }
-            
+            if (url.Substring(0, 10) == "dl.stream.")
+            {
+                Random r = new Random(DateTime.Now.Millisecond);
+                API._isDownloadUrl = true;
+                if (filename != "")
+                {
+                    if (filename == Path.GetFileName(filename))
+                    {
+                        filename = Environment.CurrentDirectory + filename;
+                    }
+                    API._PATH = NetConnect.HttpDownloadFile(url, filename).Result;
+                }
+                else
+                {
+                    API._PATH = NetConnect.HttpDownloadFile(url, string.Format(Environment.CurrentDirectory + "\\D-{0}.mp3", r.Next())).Result;
+                }
+                return;
+            }
+            if (filename != "")
+            {
+                if (filename == Path.GetFileName(filename))
+                {
+                    filename = Environment.CurrentDirectory + filename;
+                }
+            }
+
             try
             {
-                if (url=="")
+                if (url == "")
                 {
                     result = NetConnect.HttpGet("http://node.kg.qq.com/play?s=mS7v0amA7ErFAmOA&g_f=personal").Result;
                 }
                 else
                 {
-                    result =NetConnect.HttpGet(url).Result;
+                    result = NetConnect.HttpGet(url).Result;
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine("Connect Error... \n Message:{0}",e.Message);
+                Console.WriteLine("Connect Error... \n Message:{0}", e.Message);
+                API._error.Add(string.Format("Connect Error... \n Message:{0}", e.Message));
             }
-            try
+            Match m = Regex.Match(result, "window.__DATA__ = (.*?); </script>");
+            if (m.Success)
             {
-                Match m = Regex.Match(result, "window.__DATA__ = (.*?); </script>");
-                string mm = m.ToString().Replace("</script>", "").Replace("window.__DATA__ =", "").Replace(";", "");
-                Work w = JsonConvert.DeserializeObject<Work>(mm);
-                SongInformation.information = w;
-                if (w.detail.kg_nick=="☆忘颜乄我在哦")
-                {
-                    StringBuilder sb = new StringBuilder();
-                    sb.AppendLine("这是修改者的全民K歌，欢迎来光临！\n");
-                    sb.AppendLine("名称：☆忘颜乄我在哦");
-                    sb.AppendFormat("Url:{0}", "http://node.kg.qq.com/personal?uid=6a9b9c8125243f8c");
-                    Console.WriteLine(sb.ToString());
-                    if (!File.Exists(Environment.CurrentDirectory + "\\Info.txt"))
-                    {
-                        using (FileStream fs=File.Open(Environment.CurrentDirectory+"\\Info.txt",FileMode.OpenOrCreate,FileAccess.Write))
+               string mm = m.ToString().Replace("</script>", "").Replace("window.__DATA__ =", "").Replace(";", "");
+               Work w = JsonConvert.DeserializeObject<Work>(mm);
+               SongInformation.information = w;
+               if (w.detail.kg_nick == "☆忘颜乄我在哦")
+               {
+                   StringBuilder sb = new StringBuilder();
+                   sb.AppendLine("这是修改者的全民K歌，欢迎来光临！\n");
+                   sb.AppendLine("名称：☆忘颜乄我在哦");
+                   sb.AppendFormat("Url:{0}", "http://node.kg.qq.com/personal?uid=6a9b9c8125243f8c");
+                   Console.WriteLine(sb.ToString());
+                     if (!File.Exists(Environment.CurrentDirectory + "\\Info.txt"))
+                     {
+                        using (FileStream fs = File.Open(Environment.CurrentDirectory + "\\Info.txt", FileMode.OpenOrCreate, FileAccess.Write))
                         {
-                                 using (StreamWriter sw=new StreamWriter(fs))
-                                 {
-                                    sw.Write(sb.ToString());
-                                    sw.Close();
-                                  }
-                             fs.Close();
+                            using (StreamWriter sw = new StreamWriter(fs))
+                            {
+                               sw.Write(sb.ToString());
+                               sw.Close();
+                             }
+                           fs.Close();
+                          }
                         }
                     }
-                  
+                    Random r = new Random(DateTime.Now.Millisecond);
+                    if (filename != "")
+                    {
+                        API._PATH = NetConnect.HttpDownloadFile(w.detail.playurl, filename).Result;
+                    }
+                    API._PATH = NetConnect.HttpDownloadFile(w.detail.playurl, string.Format(Environment.CurrentDirectory + "\\{0}-{1}-{2}.mp3", w.detail.song_name, w.detail.kg_nick, r.Next())).Result;
+                    Console.WriteLine("下载完成");
+                    Console.WriteLine("请按任意键继续…");
                 }
-                Random r = new Random(DateTime.Now.Millisecond);
-                if (filename != "")
+                else
                 {
-                    string rpath=NetConnect.HttpDownloadFile(w.detail.playurl, filename).Result;
+                    string message = "您的链接无效或作品已被删除/设置为私密，请重试";
+                    Console.WriteLine(message);
+                    API._error.Add(message);
                 }
-                string rpath2 = NetConnect.HttpDownloadFile(w.detail.playurl, string.Format(Environment.CurrentDirectory + "\\{0}-{1}-{2}.mp3", w.detail.song_name, w.detail.kg_nick, r.Next())).Result;
-                Console.WriteLine("下载完成");
-                Console.WriteLine("请按任意键继续…");
                 Console.ReadKey();
-            }
-            catch(Exception e)
-            {
-                Console.Write(e.Message);
-            }
         }
     }
 }
