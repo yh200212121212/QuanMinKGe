@@ -90,34 +90,14 @@ namespace QuanMinKGe
                string mm = m.ToString().Replace("</script>", "").Replace("window.__DATA__ =", "").Replace(";", "");
                Work w = JsonConvert.DeserializeObject<Work>(mm);
                SongInformation.information = w;
-               if (w.detail.kg_nick == "☆忘颜乄我在哦")
-               {
-                   StringBuilder sb = new StringBuilder();
-                   sb.AppendLine("这是修改者的全民K歌，欢迎来光临！\n");
-                   sb.AppendLine("名称：☆忘颜乄我在哦");
-                   sb.AppendFormat("Url:{0}", "http://node.kg.qq.com/personal?uid=6a9b9c8125243f8c");
-                   Console.WriteLine(sb.ToString());
-                     if (!File.Exists(Environment.CurrentDirectory + "\\Info.txt"))
-                     {
-                        using (FileStream fs = File.Open(Environment.CurrentDirectory + "\\Info.txt", FileMode.OpenOrCreate, FileAccess.Write))
-                        {
-                            using (StreamWriter sw = new StreamWriter(fs))
-                            {
-                               sw.Write(sb.ToString());
-                               sw.Close();
-                             }
-                           fs.Close();
-                          }
-                        }
-                    }
-                    Random r = new Random(DateTime.Now.Millisecond);
-                    if (filename != "")
-                    {
-                        API._PATH = NetConnect.HttpDownloadFile(w.detail.playurl, filename).Result;
-                    }
-                    API._PATH = NetConnect.HttpDownloadFile(w.detail.playurl, string.Format(Environment.CurrentDirectory + "\\{0}-{1}-{2}.mp3", w.detail.song_name, w.detail.kg_nick, r.Next())).Result;
-                    Console.WriteLine("下载完成");
-                    Console.WriteLine("请按任意键继续…");
+               Random r = new Random(DateTime.Now.Millisecond);
+                 if (filename != "")
+                 {
+                     API._PATH = NetConnect.HttpDownloadFile(w.detail.playurl, filename).Result;
+                 }
+                API._PATH = NetConnect.HttpDownloadFile(w.detail.playurl, string.Format(Environment.CurrentDirectory + "\\{0}-{1}-{2}.mp3", w.detail.song_name, w.detail.kg_nick, r.Next())).Result;
+                Console.WriteLine("下载完成");
+                Console.WriteLine("请按任意键继续…");
                 }
                 else
                 {
