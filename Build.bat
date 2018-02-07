@@ -1,0 +1,2 @@
+msbuild /m
+pause
